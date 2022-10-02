@@ -77,10 +77,6 @@ RUN set -x && \
         /var/tmp/* \
         /var/lib/apt/lists/*
 
-COPY data/ /
-
-RUN chmod +x /unbound.sh
-
 LABEL org.opencontainers.image.version=${UNBOUND_VERSION} \
       org.opencontainers.image.title="mvance/unbound" \
       org.opencontainers.image.description="a validating, recursive, and caching DNS resolver" \
@@ -94,4 +90,4 @@ EXPOSE 53/udp
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 CMD drill @127.0.0.1 cloudflare.com || exit 1
 
-CMD ["/unbound.sh"]
+CMD ["unbound", "-d"]
