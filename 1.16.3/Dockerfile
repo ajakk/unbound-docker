@@ -28,7 +28,6 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
     useradd -g _unbound -s /dev/null -d /etc _unbound && \
     ./configure \
         --disable-dependency-tracking \
-        --prefix=/opt/unbound \
         --with-pthreads \
         --with-username=_unbound \
         --with-libevent \
@@ -38,12 +37,12 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
         --enable-tfo-client \
         --enable-event-api \
         --enable-subnet && \
-    make install && \
-    mv /opt/unbound/etc/unbound/unbound.conf /opt/unbound/etc/unbound/unbound.conf.example && \
+    make -j install && \
+    mv /etc/unbound/unbound.conf /etc/unbound/unbound.conf.example && \
     apt-get purge -y --auto-remove \
       $build_deps && \
     rm -rf \
-        /opt/unbound/share/man \
+        /usr/unbound/share/man \
         /tmp/* \
         /var/tmp/* \
         /var/lib/apt/lists/*
@@ -59,8 +58,6 @@ ENV NAME=unbound \
 
 WORKDIR /tmp/src
 
-COPY --from=unbound /opt /opt
-
 RUN set -x && \
     DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
       bsdmainutils \
@@ -75,7 +72,7 @@ RUN set -x && \
     apt-get purge -y --auto-remove \
       $build_deps && \
     rm -rf \
-        /opt/unbound/share/man \
+        /usr/share/man \
         /tmp/* \
         /var/tmp/* \
         /var/lib/apt/lists/*
@@ -83,10 +80,6 @@ RUN set -x && \
 COPY data/ /
 
 RUN chmod +x /unbound.sh
-
-WORKDIR /opt/unbound/
-
-ENV PATH /opt/unbound/sbin:"$PATH"
 
 LABEL org.opencontainers.image.version=${UNBOUND_VERSION} \
       org.opencontainers.image.title="mvance/unbound" \
