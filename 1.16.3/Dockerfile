@@ -6,8 +6,6 @@ ENV NAME=unbound \
     UNBOUND_SHA256=ea0c6665e2c3325b769eac1dfccd60fe1828d5fcf662650039eccb3f67edb28e
 ENV UNBOUND_DOWNLOAD_URL="https://nlnetlabs.nl/downloads/unbound/unbound-${UNBOUND_VERSION}.tar.gz"
 
-WORKDIR /tmp/src
-
 RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libssl-dev make" && \
     set -x && \
     DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
@@ -17,6 +15,7 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
       ldnsutils \
       libevent-2.1-7 \
       libexpat1 \
+      libnghttp2-14 \
       libprotobuf-c-dev \
       protobuf-c-compiler && \
     curl -sSL $UNBOUND_DOWNLOAD_URL -o unbound.tar.gz && \
@@ -27,6 +26,7 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
     groupadd _unbound && \
     useradd -g _unbound -s /dev/null -d /etc _unbound && \
     ./configure \
+        --prefix=/usr \
         --disable-dependency-tracking \
         --with-pthreads \
         --with-username=_unbound \
@@ -38,7 +38,6 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
         --enable-event-api \
         --enable-subnet && \
     make -j install && \
-    mv /etc/unbound/unbound.conf /etc/unbound/unbound.conf.example && \
     apt-get purge -y --auto-remove \
       $build_deps && \
     rm -rf \
@@ -47,35 +46,10 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
         /var/tmp/* \
         /var/lib/apt/lists/*
 
-
-FROM debian:bullseye
-LABEL maintainer="Matthew Vance"
-
 ENV NAME=unbound \
     VERSION=1.0 \
     SUMMARY="${NAME} is a validating, recursive, and caching DNS resolver." \
     DESCRIPTION="${NAME} is a validating, recursive, and caching DNS resolver."
-
-WORKDIR /tmp/src
-
-RUN set -x && \
-    DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
-      bsdmainutils \
-      ca-certificates \
-      ldnsutils \
-      libevent-2.1-7 \
-      libnghttp2-14 \
-      libexpat1 \
-      libprotobuf-c1 && \
-    groupadd _unbound && \
-    useradd -g _unbound -s /dev/null -d /etc _unbound && \
-    apt-get purge -y --auto-remove \
-      $build_deps && \
-    rm -rf \
-        /usr/share/man \
-        /tmp/* \
-        /var/tmp/* \
-        /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.version=${UNBOUND_VERSION} \
       org.opencontainers.image.title="mvance/unbound" \
