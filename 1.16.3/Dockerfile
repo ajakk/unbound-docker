@@ -26,7 +26,6 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
     groupadd _unbound && \
     useradd -g _unbound -s /dev/null -d /etc _unbound && \
     ./configure \
-        --prefix=/usr \
         --disable-dependency-tracking \
         --with-pthreads \
         --with-username=_unbound \
@@ -37,7 +36,7 @@ RUN build_deps="curl gcc libc-dev libevent-dev libexpat1-dev libnghttp2-dev libs
         --enable-tfo-client \
         --enable-event-api \
         --enable-subnet && \
-    make -j install && \
+    make DESTDIR=/ -j install && \
     apt-get purge -y --auto-remove \
       $build_deps && \
     rm -rf \
@@ -64,4 +63,4 @@ EXPOSE 53/udp
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 CMD drill @127.0.0.1 cloudflare.com || exit 1
 
-CMD ["unbound", "-d"]
+CMD ["unbound", "-d", "-c", "/etc/unbound/unbound.conf"]
